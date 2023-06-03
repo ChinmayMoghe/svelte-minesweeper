@@ -1,0 +1,1 @@
+<div>Testing the minesweeper component</div>
