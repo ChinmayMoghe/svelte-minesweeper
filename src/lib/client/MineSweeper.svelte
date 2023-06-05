@@ -128,7 +128,6 @@
   let cols: number = 20;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let board = annotate(createBoard(rows, cols, minePositions));
-  $:console.log(board);
   let cellSize: string = "35px";
 
   const clickEmptyCell = (row_idx: number, col_idx: number) => {
@@ -138,7 +137,6 @@
     // 3. cells have mines - same as 1 maybe
     // 4. cells that are flagged - need to add a flag feature as well
     const { row_min, row_max, col_min, col_max } = getBounds(row_idx, col_idx);
-    console.log('test',{ row_min, row_max, col_min, col_max });
     // loop over bounds to click each cell within the bounds
     for (let r_idx = row_min; r_idx <= row_max; r_idx++) {
       for (let c_idx = col_min; c_idx <= col_max; c_idx++) {
