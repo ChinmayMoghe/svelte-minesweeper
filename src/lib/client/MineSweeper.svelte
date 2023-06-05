@@ -1,9 +1,29 @@
 <script lang="ts">
-
   enum CellType {
     empty,
     mine,
+    count,
   }
+  enum CellClickState {
+    clicked,
+    not_clicked,
+  }
+
+  type Cell = {
+    text: string;
+    row: number;
+    col: number;
+    type: CellType;
+    clicked: CellClickState;
+  };
+
+  type Bound = {
+    row_min: number;
+    row_max: number;
+    col_min: number;
+    col_max: number;
+  };
+
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -24,57 +44,57 @@
     return idxArr;
   }
 
-  
- const getMinIdx = (idx:number) => {
-      if(idx > 0 ) {
-        return idx - 1;
-      } 
-      return 0;
-    };
-    const getMaxIdx = (idx:number,maxLen:number) => {
-      if(idx+1 > maxLen - 1) {
-        return maxLen - 1;
-      }
-      return idx+1;
-    };
-    
-    const getBounds = (row_idx:number,col_idx:number) => {
-      return {
-        row_min:getMinIdx(row_idx),
-        col_min:getMinIdx(col_idx),
-        row_max:getMaxIdx(row_idx,rows),
-        col_max:getMaxIdx(col_idx,cols)
-      }
-    };
+  const getMinIdx = (idx: number) => {
+    if (idx > 0) {
+      return idx - 1;
+    }
+    return 0;
+  };
+  const getMaxIdx = (idx: number, maxLen: number) => {
+    if (idx + 1 > maxLen - 1) {
+      return maxLen - 1;
+    }
+    return idx + 1;
+  };
 
-  const checkAdjacentCells = (bounds:{row_min:number,row_max:number,col_min:number,col_max:number},board:Array<Array<{text:string,row:number,col:number,type:CellType}>>) => {
-    const {row_min,row_max,col_min,col_max} = bounds;
+  const getBounds = (row_idx: number, col_idx: number) => {
+    return {
+      row_min: getMinIdx(row_idx),
+      col_min: getMinIdx(col_idx),
+      row_max: getMaxIdx(row_idx, rows),
+      col_max: getMaxIdx(col_idx, cols),
+    };
+  };
+
+  const checkAdjacentCells = (bounds: Bound, board: Array<Array<Cell>>) => {
+    const { row_min, row_max, col_min, col_max } = bounds;
     let count = 0;
-    for(let row_idx=row_min;row_idx<=row_max;row_idx++){
-      for(let col_idx=col_min;col_idx<=col_max;col_idx++) {
-        if(board[row_idx][col_idx].type === CellType.mine) {
-          count +=1;
+    for (let row_idx = row_min; row_idx <= row_max; row_idx++) {
+      for (let col_idx = col_min; col_idx <= col_max; col_idx++) {
+        if (board[row_idx][col_idx].type === CellType.mine) {
+          count += 1;
         }
       }
     }
     return count;
   };
-   
-  function annotate(boardWithMines:Array<Array<{text:string,row:number,col:number,type:CellType}>>) {
-       for(let row_idx=0;row_idx < rows;row_idx++){
-      for(let col_idx=0;col_idx < cols;col_idx++) {
-         if(boardWithMines[row_idx][col_idx].type === CellType.empty) {
-          const bounds = getBounds(row_idx,col_idx);
-          let mineCount = checkAdjacentCells(bounds,boardWithMines);
-          if(mineCount > 0) {
+
+  function annotate(boardWithMines: Array<Array<Cell>>) {
+    for (let row_idx = 0; row_idx < rows; row_idx++) {
+      for (let col_idx = 0; col_idx < cols; col_idx++) {
+        if (boardWithMines[row_idx][col_idx].type === CellType.empty) {
+          const bounds = getBounds(row_idx, col_idx);
+          let mineCount = checkAdjacentCells(bounds, boardWithMines);
+          if (mineCount > 0) {
             boardWithMines[row_idx][col_idx].text = `${mineCount}`;
+            boardWithMines[row_idx][col_idx].type = CellType.count;
           }
         }
       }
     }
     return boardWithMines;
   }
-  
+
   function createBoard(
     rows: number,
     cols: number,
@@ -83,30 +103,89 @@
     let boardWithMines = Array.from({ length: rows }, (_, row_idx) =>
       Array.from({ length: cols }, (_, col_idx) => {
         if (minePositions.includes(`${row_idx}${col_idx}`)) {
-          return { text: "💣", row: row_idx, col: col_idx,type:CellType.mine };
+          return {
+            text: "💣",
+            row: row_idx,
+            col: col_idx,
+            type: CellType.mine,
+            clicked: CellClickState.not_clicked,
+          };
         } else {
-          return { text: "", row: row_idx, col: col_idx,type:CellType.empty };
+          return {
+            text: "",
+            row: row_idx,
+            col: col_idx,
+            type: CellType.empty,
+            clicked: CellClickState.not_clicked,
+          };
         }
       })
     );
     return boardWithMines;
   }
-  let mines: number = 32;
-  let rows: number = 13;
-  let cols: number = 12;
+  let mines: number = 52;
+  let rows: number = 20;
+  let cols: number = 20;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let board = annotate(createBoard(rows, cols, minePositions));
+  $:console.log(board);
   let cellSize: string = "35px";
 
-    enum CellClickStates {
-    clicked,
-    not_clicked,
-  }
-
+  const clickEmptyCell = (row_idx: number, col_idx: number) => {
+    // recursively click adjacent cells until:
+    // 1. hit a boundary of mine counts - is it same as 3 ?
+    // 2. cells are already clicked
+    // 3. cells have mines - same as 1 maybe
+    // 4. cells that are flagged - need to add a flag feature as well
+    const { row_min, row_max, col_min, col_max } = getBounds(row_idx, col_idx);
+    console.log('test',{ row_min, row_max, col_min, col_max });
+    // loop over bounds to click each cell within the bounds
+    for (let r_idx = row_min; r_idx <= row_max; r_idx++) {
+      for (let c_idx = col_min; c_idx <= col_max; c_idx++) {
+        const cell = board[r_idx][c_idx];
+        if (
+          cell.clicked === CellClickState.clicked ||
+          cell.type === CellType.mine
+        ) {
+          continue;
+        }
+        board[r_idx][c_idx] = {
+          ...cell,
+          clicked: CellClickState.clicked,
+        };
+        const cellElement = document.querySelector(
+          `.cell[data-row='${r_idx}'][data-col='${c_idx}']`
+        );
+        cellElement.dispatchEvent(new MouseEvent("click"));
+      }
+    }
+  };
 
   const handleCellClick = (event: MouseEvent) => {
     if (event.target instanceof HTMLButtonElement) {
-      console.log(event.target.dataset.row, event.target.dataset.col);
+      const row_idx = Number(event.target.dataset.row);
+      const col_idx = Number(event.target.dataset.col);
+      const cell = board[row_idx][col_idx];
+      switch (cell.type) {
+        case CellType.mine:
+          board[row_idx][col_idx] = {
+            ...cell,
+            clicked: CellClickState.clicked,
+          };
+          console.log("Game over!!! You lose mf!!!");
+          break;
+        case CellType.empty:
+          clickEmptyCell(row_idx, col_idx);
+          break;
+        case CellType.count:
+          board[row_idx][col_idx] = {
+            ...cell,
+            clicked: CellClickState.clicked,
+          };
+          break;
+        default:
+          break;
+      }
     }
   };
 </script>
@@ -119,8 +198,13 @@
           on:click={handleCellClick}
           data-row={cell.row}
           data-col={cell.col}
-          class="cell">{cell.text}</button
+          class="cell"
+          class:clicked={cell.clicked === CellClickState.clicked}
         >
+          {#if cell.clicked === CellClickState.clicked}
+            {cell.text}
+          {/if}
+        </button>
       {/each}
     {/each}
   </div>
@@ -156,5 +240,9 @@
     justify-content: center;
     align-items: center;
     background-color: grey;
+  }
+
+  .cell.clicked {
+    background-color: lightgrey;
   }
 </style>
