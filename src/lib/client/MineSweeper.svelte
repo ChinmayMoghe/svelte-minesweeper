@@ -1,4 +1,6 @@
 <script lang="ts">
+  const _noop = () => {};
+
   enum CellType {
     empty,
     mine,
@@ -9,6 +11,11 @@
   enum CellClickState {
     clicked,
     not_clicked,
+  }
+
+  enum CellSymbols {
+    mine = "💣",
+    flag = "🚩",
   }
 
   enum FlagState {
@@ -124,7 +131,7 @@
           flagged: FlagState.not_flagged,
         };
         if (minePositions.includes(`${row_idx}${col_idx}`)) {
-          cell.text = "💣";
+          cell.text = CellSymbols.mine;
           cell.type = CellType.mine;
         }
         return cell;
@@ -159,7 +166,7 @@
           );
           setTimeout(() => {
             cellElement.dispatchEvent(new MouseEvent("mousedown"));
-          }, 0);
+          });
         } else {
           break;
         }
@@ -172,11 +179,16 @@
       const row_idx = Number(event.target.dataset.row);
       const col_idx = Number(event.target.dataset.col);
       const cell = board[row_idx][col_idx];
-      if (cell.clicked === CellClickState.not_clicked) {
+      if (
+        cell.clicked === CellClickState.not_clicked &&
+        cell.flagged === FlagState.not_flagged
+      ) {
         board[row_idx][col_idx] = {
           ...cell,
           clicked: CellClickState.clicked,
         };
+      } else if (cell.flagged === FlagState.flagged) {
+        board[row_idx][col_idx] = { ...cell, flagged: FlagState.not_flagged };
       } else {
         return;
       }
@@ -196,7 +208,6 @@
   };
 
   const handleCellClick = (event: MouseEvent) => {
-    console.log("event.button", event.button);
     switch (event.button) {
       case ClickType.left:
         handleLeftClick(event);
@@ -217,6 +228,10 @@
       if (cell.clicked === CellClickState.not_clicked) {
         board[row_idx][col_idx] = {
           ...cell,
+          flagged:
+            cell.flagged === FlagState.flagged
+              ? FlagState.not_flagged
+              : FlagState.flagged,
         };
       } else {
         return;
@@ -230,15 +245,19 @@
     {#each board as rows}
       {#each rows as cell}
         <button
-          on:mousedown={handleCellClick}
+          on:mousedown={cell.clicked === CellClickState.not_clicked
+            ? handleCellClick
+            : _noop}
           on:contextmenu|preventDefault
           data-row={cell.row}
           data-col={cell.col}
           class="cell"
           class:clicked={cell.clicked === CellClickState.clicked}
         >
-          {#if cell.clicked === CellClickState.clicked}
+          {#if cell.clicked === CellClickState.clicked && cell.flagged === FlagState.not_flagged}
             {cell.text}
+          {:else if cell.flagged === FlagState.flagged}
+            {CellSymbols.flag}
           {/if}
         </button>
       {/each}
