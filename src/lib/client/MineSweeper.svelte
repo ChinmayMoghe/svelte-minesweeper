@@ -44,6 +44,11 @@
     right = 2,
   }
 
+  enum GameState {
+    over,
+    on
+  }
+
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -51,17 +56,17 @@
   ) {
     const [lower_row, upper_row]: Array<number> = [0, row_count - 1];
     const [lower_col, upper_col]: Array<number> = [0, col_count - 1];
-    const idxArr = [];
-    while (idxArr.length !== range) {
+    const idxMap = new Map();
+    while (idxMap.size !== range) {
       const rowIdx = Math.floor(
         Math.random() * (upper_row - lower_row + 1 + lower_row)
       );
       const colIdx = Math.floor(
         Math.random() * (upper_col - lower_col + 1 + lower_col)
       );
-      idxArr.push([rowIdx,colIdx]);
+      idxMap.set(`${rowIdx}${colIdx}`,[rowIdx,colIdx]);
     }
-    return idxArr;
+    return [...idxMap.values()];
   }
 
   const getMinIdx = (idx: number) => {
@@ -121,6 +126,7 @@
     minePositions: Array<Array<number>>
   ) {
     const minePositionsStrings = minePositions.map(([r,c])=>`${r}${c}`);
+    console.log(minePositionsStrings);
     let boardWithMines = Array.from({ length: rows }, (_, row_idx) =>
       Array.from({ length: cols }, (_, col_idx) => {
         let cell: Cell = {
@@ -132,8 +138,8 @@
           flagged: FlagState.not_flagged,
         };
         if (minePositionsStrings.includes(`${row_idx}${col_idx}`)) {
-          cell.text = CellSymbols.mine;
           cell.type = CellType.mine;
+          cell.text = CellSymbols.mine;
         }
         return cell;
       })
@@ -143,6 +149,7 @@
   let mines: number = 46;
   let rows: number = 16;
   let cols: number = 30;
+  let game_over:GameState = GameState.on;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let board = annotate(createBoard(rows, cols, minePositions));
   let cellSize: string = "40px";
@@ -187,6 +194,7 @@
             cellElement.dispatchEvent(new MouseEvent("mousedown"));
           });
     }
+    // game_over = GameState.over;
   };
 
   const handleLeftClick = (event: MouseEvent) => {
@@ -261,7 +269,7 @@
       {#each rows as cell}
         <button
           tabindex={cell.clicked === CellClickState.clicked ? -1 : 0}
-          on:mousedown={cell.clicked === CellClickState.not_clicked
+          on:mousedown={cell.clicked === CellClickState.not_clicked || game_over === GameState.on
             ? handleCellClick
             : _noop}
           on:contextmenu|preventDefault
