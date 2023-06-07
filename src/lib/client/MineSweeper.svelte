@@ -183,6 +183,7 @@
   };
 
   const handleMineClick = (cell: Cell) => {
+    const areAllMinesClick = [];
     for (let [row, col] of minePositions) {
       if (cell.row === row && cell.col === col) {
         continue;
@@ -190,11 +191,20 @@
       const cellElement = document.querySelector(
         `.cell[data-row='${row}'][data-col='${col}']`
       );
-      setTimeout(() => {
-        cellElement.dispatchEvent(new MouseEvent("mousedown"));
-      });
+      areAllMinesClick.push(
+        new Promise((res, _) => {
+          setTimeout(() => {
+            res(cellElement.dispatchEvent(new MouseEvent("mousedown")));
+          });
+        })
+      );
     }
-    game_over = GameState.over;
+
+    // super important: wait for all mines to be clicked and then set the state to be game over to 
+    // disable the event handlers
+    Promise.all(areAllMinesClick).then(() => {
+      game_over = GameState.over;
+    });
   };
 
   const handleLeftClick = (event: MouseEvent) => {
