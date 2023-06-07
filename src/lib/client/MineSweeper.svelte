@@ -50,6 +50,21 @@
     on,
   }
 
+  type GameConfig = {
+    rows:number,
+    cols:number,
+    mines:number
+  }
+
+  type GameModes = 'baby' | 'boy' | 'expert' | 'gambler';
+  
+  const GameDifficulty:Record<GameModes,GameConfig> = {
+    baby:{rows:5, cols:5, mines:3},
+    boy:{rows:16,cols:16,mines:16},
+    expert:{rows:16,cols:16,mines:40},
+    gambler:{rows:16,cols:16,mines:77}
+  }
+  
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -146,9 +161,10 @@
     );
     return boardWithMines;
   }
-  let mines: number = 46;
-  let rows: number = 16;
-  let cols: number = 30;
+  let mines: number = GameDifficulty.boy.mines;
+  let rows: number = GameDifficulty.boy.rows;
+  let cols: number = GameDifficulty.boy.cols;
+  let minesToFlag: number = mines;
   let game_over: GameState = GameState.on;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let board = annotate(createBoard(rows, cols, minePositions));
@@ -220,7 +236,7 @@
           ...cell,
           clicked: CellClickState.clicked,
         };
-      }  else {
+      } else {
         return;
       }
       switch (cell.type) {
@@ -256,14 +272,17 @@
       const row_idx = Number(event.target.dataset.row);
       const col_idx = Number(event.target.dataset.col);
       const cell = board[row_idx][col_idx];
-      if (cell.clicked === CellClickState.not_clicked) {
+      if (cell.clicked === CellClickState.not_clicked && minesToFlag > 0) {
+        const isCellFlagged = cell.flagged === FlagState.flagged;
         board[row_idx][col_idx] = {
           ...cell,
-          flagged:
-            cell.flagged === FlagState.flagged
-              ? FlagState.not_flagged
-              : FlagState.flagged,
+          flagged: isCellFlagged ? FlagState.not_flagged : FlagState.flagged,
         };
+        if(isCellFlagged) {
+          minesToFlag+= 1;
+        } else {
+          minesToFlag-= 1;
+        }
       } else {
         return;
       }
@@ -284,6 +303,7 @@
 </script>
 
 <div class="minesweeper_container">
+  <div>Mines : {minesToFlag} remaining</div>
   <div class="grid" style="--rows:{rows};--cols:{cols};--cell-size:{cellSize}">
     {#each board as rows}
       {#each rows as cell}
@@ -307,10 +327,11 @@
 
 <style>
   .minesweeper_container {
-    min-height: 100vh;
-    background-color: green;
     display: grid;
+    grid-template-rows: auto 1fr;
     place-items: center;
+    padding:20px;
+    gap:20px;
   }
   .grid {
     --border-width: 1px;
@@ -335,6 +356,7 @@
     justify-content: center;
     align-items: center;
     background-color: grey;
+    font-size:20px;
   }
 
   .cell.clicked {
