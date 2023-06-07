@@ -16,6 +16,7 @@
   enum CellSymbols {
     mine = "💣",
     flag = "🚩",
+    empty = "",
   }
 
   enum FlagState {
@@ -46,7 +47,7 @@
 
   enum GameState {
     over,
-    on
+    on,
   }
 
   function uniqueRandomIndices(
@@ -64,7 +65,7 @@
       const colIdx = Math.floor(
         Math.random() * (upper_col - lower_col + 1 + lower_col)
       );
-      idxMap.set(`${rowIdx}${colIdx}`,[rowIdx,colIdx]);
+      idxMap.set(`${rowIdx}${colIdx}`, [rowIdx, colIdx]);
     }
     return [...idxMap.values()];
   }
@@ -125,8 +126,7 @@
     cols: number,
     minePositions: Array<Array<number>>
   ) {
-    const minePositionsStrings = minePositions.map(([r,c])=>`${r}${c}`);
-    console.log(minePositionsStrings);
+    const minePositionsStrings = minePositions.map(([r, c]) => `${r}${c}`);
     let boardWithMines = Array.from({ length: rows }, (_, row_idx) =>
       Array.from({ length: cols }, (_, col_idx) => {
         let cell: Cell = {
@@ -149,7 +149,7 @@
   let mines: number = 46;
   let rows: number = 16;
   let cols: number = 30;
-  let game_over:GameState = GameState.on;
+  let game_over: GameState = GameState.on;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let board = annotate(createBoard(rows, cols, minePositions));
   let cellSize: string = "40px";
@@ -182,19 +182,19 @@
     }
   };
 
-  const handleMineClick = (cell:Cell) => {
-     for (let [row,col] of minePositions) {
-          if(cell.row === row && cell.col === col) {
-            continue;
-          }
-          const cellElement = document.querySelector(
-            `.cell[data-row='${row}'][data-col='${col}']`
-          );
-          setTimeout(() => {
-            cellElement.dispatchEvent(new MouseEvent("mousedown"));
-          });
+  const handleMineClick = (cell: Cell) => {
+    for (let [row, col] of minePositions) {
+      if (cell.row === row && cell.col === col) {
+        continue;
+      }
+      const cellElement = document.querySelector(
+        `.cell[data-row='${row}'][data-col='${col}']`
+      );
+      setTimeout(() => {
+        cellElement.dispatchEvent(new MouseEvent("mousedown"));
+      });
     }
-    // game_over = GameState.over;
+    game_over = GameState.over;
   };
 
   const handleLeftClick = (event: MouseEvent) => {
@@ -261,6 +261,18 @@
       }
     }
   };
+
+  const getCellContent = (cell: Cell) => {
+    if (
+      cell.clicked === CellClickState.clicked &&
+      cell.flagged === FlagState.not_flagged
+    ) {
+      return cell.text;
+    } else if (cell.flagged === FlagState.flagged) {
+      return CellSymbols.flag;
+    }
+    return CellSymbols.empty;
+  };
 </script>
 
 <div class="minesweeper_container">
@@ -269,7 +281,8 @@
       {#each rows as cell}
         <button
           tabindex={cell.clicked === CellClickState.clicked ? -1 : 0}
-          on:mousedown={cell.clicked === CellClickState.not_clicked || game_over === GameState.on
+          on:mousedown={cell.clicked === CellClickState.not_clicked &&
+          game_over === GameState.on
             ? handleCellClick
             : _noop}
           on:contextmenu|preventDefault
@@ -277,13 +290,8 @@
           data-col={cell.col}
           class="cell"
           class:clicked={cell.clicked === CellClickState.clicked}
+          >{getCellContent(cell)}</button
         >
-          {#if cell.clicked === CellClickState.clicked && cell.flagged === FlagState.not_flagged}
-            {cell.text}
-          {:else if cell.flagged === FlagState.flagged}
-            {CellSymbols.flag}
-          {/if}
-        </button>
       {/each}
     {/each}
   </div>
