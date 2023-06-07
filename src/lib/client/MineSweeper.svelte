@@ -59,7 +59,7 @@
       const colIdx = Math.floor(
         Math.random() * (upper_col - lower_col + 1 + lower_col)
       );
-      idxArr.push(`${rowIdx}${colIdx}`);
+      idxArr.push([rowIdx,colIdx]);
     }
     return idxArr;
   }
@@ -118,8 +118,9 @@
   function createBoard(
     rows: number,
     cols: number,
-    minePositions: Array<string>
+    minePositions: Array<Array<number>>
   ) {
+    const minePositionsStrings = minePositions.map(([r,c])=>`${r}${c}`);
     let boardWithMines = Array.from({ length: rows }, (_, row_idx) =>
       Array.from({ length: cols }, (_, col_idx) => {
         let cell: Cell = {
@@ -130,7 +131,7 @@
           clicked: CellClickState.not_clicked,
           flagged: FlagState.not_flagged,
         };
-        if (minePositions.includes(`${row_idx}${col_idx}`)) {
+        if (minePositionsStrings.includes(`${row_idx}${col_idx}`)) {
           cell.text = CellSymbols.mine;
           cell.type = CellType.mine;
         }
@@ -174,6 +175,20 @@
     }
   };
 
+  const handleMineClick = (cell:Cell) => {
+     for (let [row,col] of minePositions) {
+          if(cell.row === row && cell.col === col) {
+            continue;
+          }
+          const cellElement = document.querySelector(
+            `.cell[data-row='${row}'][data-col='${col}']`
+          );
+          setTimeout(() => {
+            cellElement.dispatchEvent(new MouseEvent("mousedown"));
+          });
+    }
+  };
+
   const handleLeftClick = (event: MouseEvent) => {
     if (event.target instanceof HTMLButtonElement) {
       const row_idx = Number(event.target.dataset.row);
@@ -194,7 +209,7 @@
       }
       switch (cell.type) {
         case CellType.mine:
-          console.log("Game over!!! You lose mf!!!");
+          handleMineClick(cell);
           break;
         case CellType.empty:
           clickEmptyCell(row_idx, col_idx);
@@ -245,6 +260,7 @@
     {#each board as rows}
       {#each rows as cell}
         <button
+          tabindex={cell.clicked === CellClickState.clicked ? -1 : 0}
           on:mousedown={cell.clicked === CellClickState.not_clicked
             ? handleCellClick
             : _noop}
