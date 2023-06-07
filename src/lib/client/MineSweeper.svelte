@@ -200,7 +200,7 @@
       );
     }
 
-    // super important: wait for all mines to be clicked and then set the state to be game over to 
+    // super important: wait for all mines to be clicked and then set the state to be game over to
     // disable the event handlers
     Promise.all(areAllMinesClick).then(() => {
       game_over = GameState.over;
@@ -220,9 +220,7 @@
           ...cell,
           clicked: CellClickState.clicked,
         };
-      } else if (cell.flagged === FlagState.flagged) {
-        board[row_idx][col_idx] = { ...cell, flagged: FlagState.not_flagged };
-      } else {
+      }  else {
         return;
       }
       switch (cell.type) {
