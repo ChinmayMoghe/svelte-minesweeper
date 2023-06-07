@@ -59,10 +59,10 @@
   type GameModes = 'baby' | 'boy' | 'expert' | 'gambler';
   
   const GameDifficulty:Record<GameModes,GameConfig> = {
-    baby:{rows:5, cols:5, mines:3},
-    boy:{rows:16,cols:16,mines:16},
-    expert:{rows:16,cols:16,mines:40},
-    gambler:{rows:16,cols:16,mines:77}
+    baby:{rows:5, cols:5, mines:2}, // 8% board covered with mines
+    boy:{rows:9,cols:9,mines:10}, // 12% covered with mines 
+    expert:{rows:16,cols:16,mines:40}, // 15% covered with mines
+    gambler:{rows:16,cols:30,mines:120} // 25% covered with mines - u need to be only lucky to beat this  
   }
   
   function uniqueRandomIndices(
@@ -161,9 +161,9 @@
     );
     return boardWithMines;
   }
-  let mines: number = GameDifficulty.boy.mines;
-  let rows: number = GameDifficulty.boy.rows;
-  let cols: number = GameDifficulty.boy.cols;
+  let mines: number = GameDifficulty.expert.mines;
+  let rows: number = GameDifficulty.expert.rows;
+  let cols: number = GameDifficulty.expert.cols;
   let minesToFlag: number = mines;
   let game_over: GameState = GameState.on;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
