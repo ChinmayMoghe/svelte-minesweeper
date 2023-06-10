@@ -17,6 +17,7 @@
     mine = "💣",
     flag = "🚩",
     empty = "",
+    explode = "💥",
   }
 
   enum FlagState {
@@ -46,25 +47,26 @@
   }
 
   enum GameState {
-    over,
     on,
+    win,
+    lose,
   }
 
   type GameConfig = {
-    rows:number,
-    cols:number,
-    mines:number
-  }
+    rows: number;
+    cols: number;
+    mines: number;
+  };
 
-  type GameModes = 'baby' | 'boy' | 'expert' | 'gambler';
-  
-  const GameDifficulty:Record<GameModes,GameConfig> = {
-    baby:{rows:5, cols:5, mines:2}, // 8% board covered with mines
-    boy:{rows:9,cols:9,mines:10}, // 12% covered with mines 
-    expert:{rows:16,cols:16,mines:40}, // 15% covered with mines
-    gambler:{rows:16,cols:30,mines:120} // 25% covered with mines - u need to be only lucky to beat this  
-  }
-  
+  type GameModes = "baby" | "boy" | "expert" | "gambler";
+
+  const GameDifficulty: Record<GameModes, GameConfig> = {
+    baby: { rows: 5, cols: 5, mines: 2 }, // 8% board covered with mines
+    boy: { rows: 9, cols: 9, mines: 10 }, // 12% covered with mines
+    expert: { rows: 16, cols: 16, mines: 40 }, // 15% covered with mines
+    gambler: { rows: 16, cols: 30, mines: 120 }, // 25% covered with mines - u need to be only lucky to beat this
+  };
+
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -165,10 +167,16 @@
   let rows: number = GameDifficulty.expert.rows;
   let cols: number = GameDifficulty.expert.cols;
   let minesToFlag: number = mines;
-  let game_over: GameState = GameState.on;
+  let game_state: GameState = GameState.on;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let board = annotate(createBoard(rows, cols, minePositions));
   let cellSize: string = "40px";
+  let clickedCellsCount = 0;
+  let winClickCount = rows * cols - minePositions.length;
+
+  $: if (clickedCellsCount === winClickCount) {
+    game_state = GameState.win;
+  }
 
   const clickEmptyCell = (row_idx: number, col_idx: number) => {
     // recursively click adjacent cells until:
@@ -198,8 +206,25 @@
     }
   };
 
+  const explodeAllMines = () => {
+    setTimeout(() => {
+      for (let [row, col] of minePositions) {
+        setTimeout(() => {
+          board[row][col] = {
+            ...board[row][col],
+            text: CellSymbols.explode,
+          };
+        });
+      }
+    }, 200);
+  };
+
+  const setGameLose = () => {
+    game_state = GameState.lose;
+  };
+
   const handleMineClick = (cell: Cell) => {
-    const areAllMinesClick = [];
+    const areAllMinesClicked = [];
     for (let [row, col] of minePositions) {
       if (cell.row === row && cell.col === col) {
         continue;
@@ -207,7 +232,7 @@
       const cellElement = document.querySelector(
         `.cell[data-row='${row}'][data-col='${col}']`
       );
-      areAllMinesClick.push(
+      areAllMinesClicked.push(
         new Promise((res, _) => {
           setTimeout(() => {
             res(cellElement.dispatchEvent(new MouseEvent("mousedown")));
@@ -215,12 +240,9 @@
         })
       );
     }
-
     // super important: wait for all mines to be clicked and then set the state to be game over to
     // disable the event handlers
-    Promise.all(areAllMinesClick).then(() => {
-      game_over = GameState.over;
-    });
+    Promise.all(areAllMinesClicked).then(explodeAllMines).then(setGameLose);
   };
 
   const handleLeftClick = (event: MouseEvent) => {
@@ -244,9 +266,11 @@
           handleMineClick(cell);
           break;
         case CellType.empty:
+          clickedCellsCount += 1;
           clickEmptyCell(row_idx, col_idx);
           break;
         case CellType.count:
+          clickedCellsCount += 1;
           break;
         default:
           break;
@@ -278,10 +302,10 @@
           ...cell,
           flagged: isCellFlagged ? FlagState.not_flagged : FlagState.flagged,
         };
-        if(isCellFlagged) {
-          minesToFlag+= 1;
+        if (isCellFlagged) {
+          minesToFlag += 1;
         } else {
-          minesToFlag-= 1;
+          minesToFlag -= 1;
         }
       } else {
         return;
@@ -303,14 +327,36 @@
 </script>
 
 <div class="minesweeper_container">
-  <div>Mines : {minesToFlag} remaining</div>
+  <div class="panel">
+    <div>{mines}</div>
+    <div>
+      <button
+        class="smiley_btn"
+        on:click={game_state === GameState.lose
+          ? () => {
+              game_state = GameState.on
+              board = annotate(createBoard(rows, cols, minePositions));
+            }
+          : _noop}
+      >
+        {#if game_state === GameState.on}
+          🙂
+        {:else if game_state === GameState.lose}
+          😵
+        {:else}
+          😁
+        {/if}
+      </button>
+    </div>
+    <div />
+  </div>
   <div class="grid" style="--rows:{rows};--cols:{cols};--cell-size:{cellSize}">
     {#each board as rows}
       {#each rows as cell}
         <button
           tabindex={cell.clicked === CellClickState.clicked ? -1 : 0}
           on:mousedown={cell.clicked === CellClickState.not_clicked &&
-          game_over === GameState.on
+          game_state === GameState.on
             ? handleCellClick
             : _noop}
           on:contextmenu|preventDefault
@@ -323,6 +369,11 @@
       {/each}
     {/each}
   </div>
+  {#if game_state === GameState.win}
+    <div>You win</div>
+  {:else if game_state === GameState.lose}
+    <div>You lose !!!!</div>
+  {/if}
 </div>
 
 <style>
@@ -330,9 +381,27 @@
     display: grid;
     grid-template-rows: auto 1fr;
     place-items: center;
-    padding:20px;
-    gap:20px;
+    padding: 20px;
+    gap: 20px;
+    width: fit-content;
+    background-color: grey;
+    border-radius: 4px;
   }
+
+  .panel {
+    display: flex;
+    justify-content: space-between;
+    font-size: 40px;
+    width: 100%;
+  }
+
+  .smiley_btn {
+    font-size: 40px;
+    border-radius: 4px;
+    line-height: 1.5;
+    cursor: pointer;
+  }
+
   .grid {
     --border-width: 1px;
     display: grid;
@@ -356,7 +425,7 @@
     justify-content: center;
     align-items: center;
     background-color: grey;
-    font-size:20px;
+    font-size: 20px;
   }
 
   .cell.clicked {
