@@ -163,7 +163,7 @@
     );
     return boardWithMines;
   }
-  let { rows, cols, mines, cellSize } = GameDifficulty.baby;
+  let { rows, cols, mines, cellSize } = GameDifficulty.boy;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let game_state: GameState = GameState.on;
   let board = annotate(createBoard(rows, cols, minePositions));
@@ -366,7 +366,7 @@
         {/if}
       </button>
     </div>
-    <div class="timer_ctn">{timerDisplay.minute}:{timerDisplay.seconds}</div>
+    <div class="timer_ctn">{timerDisplay.minute < 9 ? `0${timerDisplay.minute}`:timerDisplay.minute}:{timerDisplay.seconds < 9 ? `0${timerDisplay.seconds}`:timerDisplay.seconds}</div>
   </div>
   <div class="grid" style="--rows:{rows};--cols:{cols};--cell-size:{cellSize}">
     {#each board as rows}
@@ -411,7 +411,7 @@
     align-items:end;
     align-content:flex-start;
     grid-template-columns: repeat(3,1fr);
-    font-size: 40px;
+    font-size: 20px;
     width: 100%;
   }
   .smiley_ctn {
