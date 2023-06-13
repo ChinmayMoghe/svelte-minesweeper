@@ -1,72 +1,7 @@
 <script lang="ts">
   const _noop = () => {};
-  enum CellType {
-    empty,
-    mine,
-    count,
-    flag,
-  }
-
-  enum CellClickState {
-    clicked,
-    not_clicked,
-  }
-
-  enum CellSymbols {
-    mine = "💣",
-    flag = "🚩",
-    empty = "",
-    explode = "💥",
-  }
-
-  enum FlagState {
-    flagged,
-    not_flagged,
-  }
-
-  type Cell = {
-    text: string;
-    row: number;
-    col: number;
-    type: CellType;
-    clicked: CellClickState;
-    flagged: FlagState;
-  };
-
-  type Bound = {
-    row_min: number;
-    row_max: number;
-    col_min: number;
-    col_max: number;
-  };
-
-  enum ClickType {
-    left = 0,
-    right = 2,
-  }
-
-  enum GameState {
-    on,
-    win,
-    lose,
-  }
-
-  type GameConfig = {
-    rows: number;
-    cols: number;
-    mines: number;
-    cellSize: string;
-  };
-
-  type GameModes = "baby" | "boy" | "expert" | "gambler";
-
-  const GameDifficulty: Record<GameModes, GameConfig> = {
-    baby: { rows: 5, cols: 5, mines: 2, cellSize: "40px" }, // 8% board covered with mines
-    boy: { rows: 9, cols: 9, mines: 10, cellSize: "30px" }, // 12% covered with mines
-    expert: { rows: 16, cols: 16, mines: 40, cellSize: "27px" }, // 15% covered with mines
-    gambler: { rows: 16, cols: 30, mines: 120, cellSize: "25px" }, // 25% covered with mines - u need to be only lucky to beat this
-  };
-
+  import { CellClickState,CellSymbols,CellType,GameDifficulty,FlagState,ClickType,GameState } from "./interfaces/GameInterfaces";
+  import type {Cell,Bound} from './interfaces/GameInterfaces';
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -192,8 +127,8 @@
     seconds: Math.round(timer % 60),
   };
 
-  $: if(game_state !== GameState.on) {
-    intervalWorker?.postMessage({type:'STOP_TIMER'});
+  $: if (game_state !== GameState.on) {
+    intervalWorker?.postMessage({ type: "STOP_TIMER" });
   }
 
   const calculateClickedCellsCount = (board: Array<Array<Cell>>) => {
@@ -227,7 +162,7 @@
           const cellElement = document.querySelector(
             `.cell[data-row='${r_idx}'][data-col='${c_idx}']`
           );
-            cellElement.dispatchEvent(new MouseEvent("mousedown"));
+          cellElement.dispatchEvent(new MouseEvent("mousedown"));
         }
       }
     }
@@ -366,7 +301,13 @@
         {/if}
       </button>
     </div>
-    <div class="timer_ctn">{timerDisplay.minute < 9 ? `0${timerDisplay.minute}`:timerDisplay.minute}:{timerDisplay.seconds < 9 ? `0${timerDisplay.seconds}`:timerDisplay.seconds}</div>
+    <div class="timer_ctn">
+      {timerDisplay.minute < 9
+        ? `0${timerDisplay.minute}`
+        : timerDisplay.minute}:{timerDisplay.seconds < 9
+        ? `0${timerDisplay.seconds}`
+        : timerDisplay.seconds}
+    </div>
   </div>
   <div class="grid" style="--rows:{rows};--cols:{cols};--cell-size:{cellSize}">
     {#each board as rows}
@@ -408,9 +349,9 @@
 
   .panel {
     display: grid;
-    align-items:end;
-    align-content:flex-start;
-    grid-template-columns: repeat(3,1fr);
+    align-items: end;
+    align-content: flex-start;
+    grid-template-columns: repeat(3, 1fr);
     font-size: 20px;
     width: 100%;
   }
