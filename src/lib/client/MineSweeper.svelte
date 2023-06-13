@@ -1,6 +1,5 @@
 <script lang="ts">
   const _noop = () => {};
-
   enum CellType {
     empty,
     mine,
@@ -56,15 +55,16 @@
     rows: number;
     cols: number;
     mines: number;
+    cellSize: string;
   };
 
   type GameModes = "baby" | "boy" | "expert" | "gambler";
 
   const GameDifficulty: Record<GameModes, GameConfig> = {
-    baby: { rows: 5, cols: 5, mines: 2 }, // 8% board covered with mines
-    boy: { rows: 9, cols: 9, mines: 10 }, // 12% covered with mines
-    expert: { rows: 16, cols: 16, mines: 40 }, // 15% covered with mines
-    gambler: { rows: 16, cols: 30, mines: 120 }, // 25% covered with mines - u need to be only lucky to beat this
+    baby: { rows: 5, cols: 5, mines: 2, cellSize: "40px" }, // 8% board covered with mines
+    boy: { rows: 9, cols: 9, mines: 10, cellSize: "30px" }, // 12% covered with mines
+    expert: { rows: 16, cols: 16, mines: 40, cellSize: "27px" }, // 15% covered with mines
+    gambler: { rows: 16, cols: 30, mines: 120, cellSize: "25px" }, // 25% covered with mines - u need to be only lucky to beat this
   };
 
   function uniqueRandomIndices(
@@ -163,20 +163,51 @@
     );
     return boardWithMines;
   }
-  let mines: number = GameDifficulty.expert.mines;
-  let rows: number = GameDifficulty.expert.rows;
-  let cols: number = GameDifficulty.expert.cols;
-  let minesToFlag: number = mines;
-  let game_state: GameState = GameState.on;
+  let { rows, cols, mines, cellSize } = GameDifficulty.baby;
   let minePositions = uniqueRandomIndices(rows, cols, mines);
+  let game_state: GameState = GameState.on;
   let board = annotate(createBoard(rows, cols, minePositions));
-  let cellSize: string = "40px";
   let clickedCellsCount = 0;
   let winClickCount = rows * cols - minePositions.length;
-
+  $: flaggedCellsCount = mines;
+  $: clickedCellsCount = calculateClickedCellsCount(board);
   $: if (clickedCellsCount === winClickCount) {
     game_state = GameState.win;
   }
+  let timer = 0;
+  let intervalWorker: Worker;
+  let incrementTimer = () => {
+    timer += 1;
+  };
+  $: if (clickedCellsCount === 1) {
+    intervalWorker = new Worker("timer.worker.js");
+    intervalWorker.addEventListener("message", incrementTimer);
+    intervalWorker.postMessage({
+      type: "START_TIMER",
+      payload: { interval: 1000 },
+    });
+  }
+  $: timerDisplay = {
+    minute: Math.round(timer / 60),
+    seconds: Math.round(timer % 60),
+  };
+
+  $: if(game_state !== GameState.on) {
+    intervalWorker?.postMessage({type:'STOP_TIMER'});
+  }
+
+  const calculateClickedCellsCount = (board: Array<Array<Cell>>) => {
+    return board.reduce((acc, arr) => {
+      acc += arr.reduce((count, cell) => {
+        count +=
+          cell.type !== CellType.mine && cell.clicked === CellClickState.clicked
+            ? 1
+            : 0;
+        return count;
+      }, 0);
+      return acc;
+    }, 0);
+  };
 
   const clickEmptyCell = (row_idx: number, col_idx: number) => {
     // recursively click adjacent cells until:
@@ -196,27 +227,19 @@
           const cellElement = document.querySelector(
             `.cell[data-row='${r_idx}'][data-col='${c_idx}']`
           );
-          setTimeout(() => {
             cellElement.dispatchEvent(new MouseEvent("mousedown"));
-          });
-        } else {
-          break;
         }
       }
     }
   };
 
   const explodeAllMines = () => {
-    setTimeout(() => {
-      for (let [row, col] of minePositions) {
-        setTimeout(() => {
-          board[row][col] = {
-            ...board[row][col],
-            text: CellSymbols.explode,
-          };
-        });
-      }
-    }, 200);
+    for (let [row, col] of minePositions) {
+      board[row][col] = {
+        ...board[row][col],
+        text: CellSymbols.explode,
+      };
+    }
   };
 
   const setGameLose = () => {
@@ -224,25 +247,18 @@
   };
 
   const handleMineClick = (cell: Cell) => {
-    const areAllMinesClicked = [];
     for (let [row, col] of minePositions) {
-      if (cell.row === row && cell.col === col) {
-        continue;
+      if (cell.row !== row && cell.col !== col) {
+        board[row][col] = {
+          ...board[row][col],
+          clicked: CellClickState.clicked,
+        };
       }
-      const cellElement = document.querySelector(
-        `.cell[data-row='${row}'][data-col='${col}']`
-      );
-      areAllMinesClicked.push(
-        new Promise((res, _) => {
-          setTimeout(() => {
-            res(cellElement.dispatchEvent(new MouseEvent("mousedown")));
-          });
-        })
-      );
     }
-    // super important: wait for all mines to be clicked and then set the state to be game over to
-    // disable the event handlers
-    Promise.all(areAllMinesClicked).then(explodeAllMines).then(setGameLose);
+    setTimeout(() => {
+      explodeAllMines();
+      setGameLose();
+    }, 300);
   };
 
   const handleLeftClick = (event: MouseEvent) => {
@@ -258,23 +274,21 @@
           ...cell,
           clicked: CellClickState.clicked,
         };
-      } else {
-        return;
+        switch (cell.type) {
+          case CellType.mine:
+            handleMineClick(cell);
+            break;
+          case CellType.empty:
+            clickEmptyCell(row_idx, col_idx);
+            break;
+          case CellType.count:
+            break;
+          default:
+            break;
+        }
       }
-      switch (cell.type) {
-        case CellType.mine:
-          handleMineClick(cell);
-          break;
-        case CellType.empty:
-          clickedCellsCount += 1;
-          clickEmptyCell(row_idx, col_idx);
-          break;
-        case CellType.count:
-          clickedCellsCount += 1;
-          break;
-        default:
-          break;
-      }
+    } else {
+      return;
     }
   };
 
@@ -296,16 +310,16 @@
       const row_idx = Number(event.target.dataset.row);
       const col_idx = Number(event.target.dataset.col);
       const cell = board[row_idx][col_idx];
-      if (cell.clicked === CellClickState.not_clicked && minesToFlag > 0) {
+      if (cell.clicked === CellClickState.not_clicked) {
         const isCellFlagged = cell.flagged === FlagState.flagged;
         board[row_idx][col_idx] = {
           ...cell,
           flagged: isCellFlagged ? FlagState.not_flagged : FlagState.flagged,
         };
         if (isCellFlagged) {
-          minesToFlag += 1;
+          flaggedCellsCount += 1;
         } else {
-          minesToFlag -= 1;
+          flaggedCellsCount -= 1;
         }
       } else {
         return;
@@ -324,20 +338,24 @@
     }
     return CellSymbols.empty;
   };
+
+  const resetGame = () => {
+    timer = 0;
+    flaggedCellsCount = mines;
+    clickedCellsCount = 0;
+    game_state = GameState.on;
+    minePositions = uniqueRandomIndices(rows, cols, mines);
+    board = annotate(createBoard(rows, cols, minePositions));
+  };
 </script>
 
 <div class="minesweeper_container">
   <div class="panel">
-    <div>{mines}</div>
-    <div>
+    <div>{flaggedCellsCount}</div>
+    <div class="smiley_ctn">
       <button
         class="smiley_btn"
-        on:click={game_state === GameState.lose
-          ? () => {
-              game_state = GameState.on
-              board = annotate(createBoard(rows, cols, minePositions));
-            }
-          : _noop}
+        on:click={game_state !== GameState.on ? resetGame : _noop}
       >
         {#if game_state === GameState.on}
           🙂
@@ -348,7 +366,7 @@
         {/if}
       </button>
     </div>
-    <div />
+    <div class="timer_ctn">{timerDisplay.minute}:{timerDisplay.seconds}</div>
   </div>
   <div class="grid" style="--rows:{rows};--cols:{cols};--cell-size:{cellSize}">
     {#each board as rows}
@@ -389,12 +407,19 @@
   }
 
   .panel {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    align-items:end;
+    align-content:flex-start;
+    grid-template-columns: repeat(3,1fr);
     font-size: 40px;
     width: 100%;
   }
-
+  .smiley_ctn {
+    justify-self: center;
+  }
+  .timer_ctn {
+    justify-self: end;
+  }
   .smiley_btn {
     font-size: 40px;
     border-radius: 4px;
