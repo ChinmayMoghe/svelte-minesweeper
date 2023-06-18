@@ -14,7 +14,7 @@
     type GameModes,
   } from "./interfaces/GameInterfaces";
   import type { Cell, Bound } from "./interfaces/GameInterfaces";
-  import { slide } from "svelte/transition";
+    import { slide } from "svelte/transition";
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -296,7 +296,7 @@
   };
 </script>
 
-<div transition:slide|local class="minesweeper_container">
+<div class="minesweeper_container">
   <div class="panel">
     <div>{flaggedCellsCount}</div>
     <div class="smiley_ctn">
@@ -417,7 +417,7 @@
   }
 
   .cell:not(.clicked):hover {
-    background-color:rgb(30 147 117 / 57%);   
+    background-color: rgb(30 147 117 / 57%);
     cursor: pointer;
   }
 

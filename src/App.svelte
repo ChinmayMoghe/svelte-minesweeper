@@ -4,13 +4,19 @@
     GameDifficulty,
     type GameModes,
   } from "./lib/client/interfaces/GameInterfaces";
+  import { slide } from "svelte/transition";
   let difficulty: GameModes = "baby";
   let isModeSelected: Boolean = false;
+
+  const resetMode = () => (isModeSelected = false);
 </script>
 
 <div class="app">
   {#if isModeSelected}
-    <MineSweeper {difficulty} />
+    <div class="minesweeper_ctn" in:slide|local>
+      <button class="select_mode_btn" on:click={resetMode}>Select mode</button>
+      <MineSweeper {difficulty} />
+    </div>
   {:else}
     <form
       on:submit|preventDefault={() => {
@@ -64,5 +70,11 @@
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
+  }
+
+  .minesweeper_ctn {
+    display: flex;
+    flex-direction: column;
+    row-gap: 20px;
   }
 </style>
