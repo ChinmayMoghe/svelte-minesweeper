@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let difficulty: String = "boy";
+  export let difficulty: GameModes = "boy";
   const _noop = () => {
     return;
   };
@@ -11,8 +11,10 @@
     FlagState,
     ClickType,
     GameState,
+    type GameModes,
   } from "./interfaces/GameInterfaces";
   import type { Cell, Bound } from "./interfaces/GameInterfaces";
+  import { slide } from "svelte/transition";
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -294,7 +296,7 @@
   };
 </script>
 
-<div class="minesweeper_container">
+<div transition:slide|local class="minesweeper_container">
   <div class="panel">
     <div>{flaggedCellsCount}</div>
     <div class="smiley_ctn">
@@ -338,10 +340,14 @@
       {/each}
     {/each}
   </div>
-  {#if game_state === GameState.win}
-    <div>You win</div>
-  {:else if game_state === GameState.lose}
-    <div>You lose !!!!</div>
+  {#if game_state !== GameState.on}
+    <div transition:slide|local>
+      {#if game_state === GameState.win}
+        You win
+      {:else if game_state === GameState.lose}
+        You lose !!!!
+      {/if}
+    </div>
   {/if}
 </div>
 
@@ -369,6 +375,7 @@
     justify-self: center;
   }
   .timer_ctn {
+    width: 76px;
     justify-self: end;
   }
   .smiley_btn {

@@ -1,13 +1,16 @@
 <script lang="ts">
   import MineSweeper from "./lib/client/MineSweeper.svelte";
-  import { GameDifficulty } from "./lib/client/interfaces/GameInterfaces";
-  let difficulty: String = "baby";
+  import {
+    GameDifficulty,
+    type GameModes,
+  } from "./lib/client/interfaces/GameInterfaces";
+  let difficulty: GameModes = "baby";
   let isModeSelected: Boolean = false;
 </script>
 
 <div class="app">
   {#if isModeSelected}
-    <MineSweeper {difficulty} />
+      <MineSweeper {difficulty} />
   {:else}
     <form
       on:submit|preventDefault={() => {
