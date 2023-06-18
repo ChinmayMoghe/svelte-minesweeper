@@ -18,13 +18,10 @@
         <div>
           <input
             type="radio"
+            bind:group={difficulty}
             name="difficulty"
             id={key}
             value={key}
-            on:click={() => {
-              difficulty = key;
-            }}
-            checked={difficulty === key}
           />
           <label for={key}>{key}</label>
         </div>
