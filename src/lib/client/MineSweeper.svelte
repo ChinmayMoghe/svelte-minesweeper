@@ -167,8 +167,11 @@
     for (let r_idx = row_min; r_idx <= row_max; r_idx++) {
       for (let c_idx = col_min; c_idx <= col_max; c_idx++) {
         const cell = board[r_idx][c_idx];
-        if (cell.type!== CellType.mine && cell.clicked === CellClickState.not_clicked) {
-            board[r_idx][c_idx] = { ...cell, clicked: CellClickState.clicked };
+        if (
+          cell.type !== CellType.mine &&
+          cell.clicked === CellClickState.not_clicked
+        ) {
+          board[r_idx][c_idx] = { ...cell, clicked: CellClickState.clicked };
           clickEmptyCell(r_idx, c_idx);
         }
       }
@@ -309,9 +312,9 @@
       </button>
     </div>
     <div class="timer_ctn">
-      {timerDisplay.minute < 9
+      {timerDisplay.minute < 10
         ? `0${timerDisplay.minute}`
-        : timerDisplay.minute}:{timerDisplay.seconds < 9
+        : timerDisplay.minute}:{timerDisplay.seconds < 10
         ? `0${timerDisplay.seconds}`
         : timerDisplay.seconds}
     </div>
@@ -356,7 +359,7 @@
 
   .panel {
     display: grid;
-    align-items: end;
+    align-items: center;
     align-content: flex-start;
     grid-template-columns: repeat(3, 1fr);
     font-size: 20px;
@@ -369,7 +372,7 @@
     justify-self: end;
   }
   .smiley_btn {
-    font-size: 40px;
+    font-size: 30px;
     border-radius: 4px;
     line-height: 1.5;
     cursor: pointer;

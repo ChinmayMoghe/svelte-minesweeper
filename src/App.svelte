@@ -15,7 +15,7 @@
       }}
     >
       {#each Object.keys(GameDifficulty) as key}
-        <div>
+        <div class="radio_grp">
           <input
             type="radio"
             bind:group={difficulty}
@@ -23,10 +23,10 @@
             id={key}
             value={key}
           />
-          <label for={key}>{key}</label>
+          <label class="radio_label" for={key}>{key}</label>
         </div>
       {/each}
-      <button>Select mode</button>
+      <button class="select_mode_btn">Select mode</button>
     </form>
   {/if}
 </div>
@@ -36,5 +36,28 @@
     display: grid;
     min-height: 100vh;
     place-items: center;
+  }
+
+  .radio_grp {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    column-gap: 15px;
+  }
+
+  .radio_label {
+    font-size: 15px;
+    text-transform: capitalize;
+  }
+
+  .radio_grp input[type="radio"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  .select_mode_btn {
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
   }
 </style>
