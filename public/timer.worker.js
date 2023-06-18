@@ -4,6 +4,7 @@ function startTimer({ interval = 1000 }) {
   if (intervalId) {
     stopTimer();
   } else {
+    postMessage('TICK');
     intervalId = setInterval(() => {
       postMessage('TICK');
     }, interval);

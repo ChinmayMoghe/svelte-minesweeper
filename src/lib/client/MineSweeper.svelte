@@ -1,7 +1,18 @@
 <script lang="ts">
-  const _noop = () => {};
-  import { CellClickState,CellSymbols,CellType,GameDifficulty,FlagState,ClickType,GameState } from "./interfaces/GameInterfaces";
-  import type {Cell,Bound} from './interfaces/GameInterfaces';
+  export let difficulty: String = "boy";
+  const _noop = () => {
+    return;
+  };
+  import {
+    CellClickState,
+    CellSymbols,
+    CellType,
+    GameDifficulty,
+    FlagState,
+    ClickType,
+    GameState,
+  } from "./interfaces/GameInterfaces";
+  import type { Cell, Bound } from "./interfaces/GameInterfaces";
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -98,7 +109,7 @@
     );
     return boardWithMines;
   }
-  let { rows, cols, mines, cellSize } = GameDifficulty.boy;
+  let { rows, cols, mines, cellSize } = GameDifficulty[difficulty];
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let game_state: GameState = GameState.on;
   let board = annotate(createBoard(rows, cols, minePositions));
@@ -114,7 +125,7 @@
   let incrementTimer = () => {
     timer += 1;
   };
-  $: if (clickedCellsCount === 1) {
+  $: if (clickedCellsCount >= 1 && timer === 0) {
     intervalWorker = new Worker("timer.worker.js");
     intervalWorker.addEventListener("message", incrementTimer);
     intervalWorker.postMessage({
@@ -134,10 +145,7 @@
   const calculateClickedCellsCount = (board: Array<Array<Cell>>) => {
     return board.reduce((acc, arr) => {
       acc += arr.reduce((count, cell) => {
-        count +=
-          cell.type !== CellType.mine && cell.clicked === CellClickState.clicked
-            ? 1
-            : 0;
+        count += cell.clicked === CellClickState.clicked ? 1 : 0;
         return count;
       }, 0);
       return acc;
@@ -150,19 +158,18 @@
     // 2. cells are already clicked
     // 3. cells have mines - same as 1 maybe
     // 4. cells that are flagged - need to add a flag feature as well
+    if (board[row_idx][col_idx].type === CellType.count) {
+      return;
+    }
+
     const { row_min, row_max, col_min, col_max } = getBounds(row_idx, col_idx);
     // loop over bounds to click each cell within the bounds
     for (let r_idx = row_min; r_idx <= row_max; r_idx++) {
       for (let c_idx = col_min; c_idx <= col_max; c_idx++) {
         const cell = board[r_idx][c_idx];
-        if (
-          [CellType.empty, CellType.count].includes(cell.type) &&
-          cell.clicked === CellClickState.not_clicked
-        ) {
-          const cellElement = document.querySelector(
-            `.cell[data-row='${r_idx}'][data-col='${c_idx}']`
-          );
-          cellElement.dispatchEvent(new MouseEvent("mousedown"));
+        if (cell.type!== CellType.mine && cell.clicked === CellClickState.not_clicked) {
+            board[r_idx][c_idx] = { ...cell, clicked: CellClickState.clicked };
+          clickEmptyCell(r_idx, c_idx);
         }
       }
     }
