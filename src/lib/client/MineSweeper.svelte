@@ -334,6 +334,7 @@
           data-row={cell.row}
           data-col={cell.col}
           class="cell"
+          class:gameover={game_state !== GameState.on}
           class:clicked={cell.clicked === CellClickState.clicked}
           >{getCellContent(cell)}</button
         >
@@ -409,6 +410,15 @@
     align-items: center;
     background-color: grey;
     font-size: 20px;
+  }
+
+  .cell.gameover {
+    pointer-events: none;
+  }
+
+  .cell:not(.clicked):hover {
+    background-color:rgb(30 147 117 / 57%);   
+    cursor: pointer;
   }
 
   .cell.clicked {

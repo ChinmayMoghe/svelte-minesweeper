@@ -10,7 +10,7 @@
 
 <div class="app">
   {#if isModeSelected}
-      <MineSweeper {difficulty} />
+    <MineSweeper {difficulty} />
   {:else}
     <form
       on:submit|preventDefault={() => {
@@ -18,15 +18,17 @@
       }}
     >
       {#each Object.keys(GameDifficulty) as key}
-        <div class="radio_grp">
-          <input
-            type="radio"
-            bind:group={difficulty}
-            name="difficulty"
-            id={key}
-            value={key}
-          />
-          <label class="radio_label" for={key}>{key}</label>
+        <div>
+          <label class="radio_grp radio_label" for={key}>
+            <input
+              type="radio"
+              bind:group={difficulty}
+              name="difficulty"
+              id={key}
+              value={key}
+            />
+            {key}
+          </label>
         </div>
       {/each}
       <button class="select_mode_btn">Select mode</button>
