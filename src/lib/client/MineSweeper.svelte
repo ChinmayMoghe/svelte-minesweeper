@@ -14,7 +14,7 @@
     type GameModes,
   } from "./interfaces/GameInterfaces";
   import type { Cell, Bound } from "./interfaces/GameInterfaces";
-    import { slide } from "svelte/transition";
+  import { slide } from "svelte/transition";
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
@@ -170,7 +170,8 @@
       for (let c_idx = col_min; c_idx <= col_max; c_idx++) {
         const cell = board[r_idx][c_idx];
         if (
-          cell.type !== CellType.mine &&
+          ![CellType.mine].includes(cell.type) &&
+          cell.flagged !== FlagState.flagged &&
           cell.clicked === CellClickState.not_clicked
         ) {
           board[r_idx][c_idx] = { ...cell, clicked: CellClickState.clicked };
@@ -193,14 +194,12 @@
     game_state = GameState.lose;
   };
 
-  const handleMineClick = (cell: Cell) => {
+  const handleMineClick = () => {
     for (let [row, col] of minePositions) {
-      if (cell.row !== row && cell.col !== col) {
-        board[row][col] = {
-          ...board[row][col],
-          clicked: CellClickState.clicked,
-        };
-      }
+      board[row][col] = {
+        ...board[row][col],
+        clicked: CellClickState.clicked,
+      };
     }
     setTimeout(() => {
       explodeAllMines();
@@ -223,7 +222,7 @@
         };
         switch (cell.type) {
           case CellType.mine:
-            handleMineClick(cell);
+            handleMineClick();
             break;
           case CellType.empty:
             clickEmptyCell(row_idx, col_idx);

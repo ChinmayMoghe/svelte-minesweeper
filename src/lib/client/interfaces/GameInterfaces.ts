@@ -1,8 +1,7 @@
 export enum CellType {
   empty,
   mine,
-  count,
-  flag,
+  count
 }
 
 export enum CellClickState {
