@@ -1,5 +1,5 @@
 
-# Svelte minesweeper
+# Svelte minesweeper (Live demo - https://dazzling-begonia-b2c74f.netlify.app)
 
 A minesweeper clone made with Svelte, for learning Svelte and some fun !!!
 
