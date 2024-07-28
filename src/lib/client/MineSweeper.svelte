@@ -297,7 +297,7 @@
 
 <div class="minesweeper_container">
   <div class="panel">
-    <div>{flaggedCellsCount}</div>
+    <div>💣 {flaggedCellsCount}</div>
     <div class="smiley_ctn">
       <button
         class="smiley_btn"

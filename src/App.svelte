@@ -12,6 +12,7 @@
 </script>
 
 <div class="app">
+  <h1>😊Mine💣swee💥per😵</h1>
   {#if isModeSelected}
     <div class="minesweeper_ctn" in:slide|local>
       <button class="select_mode_btn" on:click={resetMode}>Select mode</button>
@@ -24,7 +25,6 @@
       }}
     >
       {#each Object.keys(GameDifficulty) as key}
-        <div>
           <label class="radio_grp radio_label" for={key}>
             <input
               type="radio"
@@ -35,7 +35,6 @@
             />
             {key}
           </label>
-        </div>
       {/each}
       <button class="select_mode_btn">Select mode</button>
     </form>
@@ -43,33 +42,48 @@
 </div>
 
 <style>
+
+  h1 {
+    margin:20px 0;
+  }
+  
   .app {
     display: grid;
     min-height: 100vh;
     place-items: center;
+    grid-template-rows: max-content 1fr;
+  }
+
+  form {
+    display:flex;
+    flex-direction:column;
+    row-gap:20px;
   }
 
   .radio_grp {
-    margin: 10px 0;
+    margin: 15px 0;
     display: flex;
     align-items: center;
-    column-gap: 15px;
+    column-gap: 25px;
   }
 
   .radio_label {
-    font-size: 15px;
+    font-size: 25px;
     text-transform: capitalize;
+    cursor:pointer;
   }
 
   .radio_grp input[type="radio"] {
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
+    cursor:pointer;
   }
 
   .select_mode_btn {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
+    font-size:20px;
   }
 
   .minesweeper_ctn {
