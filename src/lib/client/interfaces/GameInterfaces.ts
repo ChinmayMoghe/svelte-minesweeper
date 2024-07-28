@@ -16,8 +16,8 @@ export enum CellSymbols {
 }
 
 export enum FlagState {
-	flagged,
-	not_flagged,
+	flagged = 0,
+	not_flagged = 1,
 }
 
 export type Cell = {
