@@ -20,8 +20,8 @@
     col_count: number,
     range: number,
   ) {
-    const [, upper_row]: Array<number> = [0, row_count - 1];
-    const [, upper_col]: Array<number> = [0, col_count - 1];
+    const upper_row = row_count - 1;
+    const upper_col = col_count - 1;
     const idxMap = new Map();
     while (idxMap.size !== range) {
       const rowIdx = Math.floor(Math.random() * upper_row);
@@ -44,7 +44,7 @@
     return idx + 1;
   };
 
-  const getBounds = (row_idx: number, col_idx: number) => {
+  const getBounds = (row_idx: number, col_idx: number): Bound => {
     return {
       row_min: getMinIdx(row_idx),
       col_min: getMinIdx(col_idx),
@@ -52,35 +52,6 @@
       col_max: getMaxIdx(col_idx, cols),
     };
   };
-
-  const checkAdjacentCells = (bounds: Bound, board: Cell[][]) => {
-    const { row_min, row_max, col_min, col_max } = bounds;
-    let count = 0;
-    for (let row_idx = row_min; row_idx <= row_max; row_idx++) {
-      for (let col_idx = col_min; col_idx <= col_max; col_idx++) {
-        if (board[row_idx][col_idx].type === CellType.mine) {
-          count += 1;
-        }
-      }
-    }
-    return count;
-  };
-
-  function annotate(boardWithMines: Array<Array<Cell>>) {
-    for (let row_idx = 0; row_idx < rows; row_idx++) {
-      for (let col_idx = 0; col_idx < cols; col_idx++) {
-        if (boardWithMines[row_idx][col_idx].type === CellType.empty) {
-          const bounds = getBounds(row_idx, col_idx);
-          let mineCount = checkAdjacentCells(bounds, boardWithMines);
-          if (mineCount > 0) {
-            boardWithMines[row_idx][col_idx].text = `${mineCount}`;
-            boardWithMines[row_idx][col_idx].type = CellType.count;
-          }
-        }
-      }
-    }
-    return boardWithMines;
-  }
 
   function annotateWithMines(
     boardWithMines: Cell[][],
@@ -115,8 +86,8 @@
   function createBoard(
     rows: number,
     cols: number,
-    minePositions: Array<Array<number>>,
-  ) {
+    minePositions: number[][],
+  ): Cell[][] {
     const minePositionsStrings = minePositions.map(([r, c]) => `${r}_${c}`);
     let boardWithMines = Array.from({ length: rows }, (_, row_idx) =>
       Array.from({ length: cols }, (_, col_idx) => {
@@ -320,7 +291,10 @@
     clickedCellsCount = 0;
     game_state = GameState.on;
     minePositions = uniqueRandomIndices(rows, cols, mines);
-    board = annotate(createBoard(rows, cols, minePositions));
+    board = annotateWithMines(
+      createBoard(rows, cols, minePositions),
+      minePositions,
+    );
   };
 </script>
 
