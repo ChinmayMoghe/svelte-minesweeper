@@ -60,5 +60,5 @@ export const GameDifficulty: Record<GameModes, GameConfig> = {
 	baby: { rows: 5, cols: 5, mines: 2, cellSize: "40px" }, // 8% board covered with mines
 	normal: { rows: 9, cols: 9, mines: 10, cellSize: "30px" }, // 12% covered with mines
 	expert: { rows: 16, cols: 16, mines: 40, cellSize: "27px" }, // 15% covered with mines
-	"cheat with an AI": { rows: 16, cols: 30, mines: 120, cellSize: "25px" }, // 25% covered with mines - u need to be only lucky to beat this
+	"cheat with an AI": { rows: 16, cols: 46, mines: 180, cellSize: "25px" }, // 25% covered with mines - u need to be only lucky to beat this
 };

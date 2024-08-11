@@ -25,16 +25,16 @@
       }}
     >
       {#each Object.keys(GameDifficulty) as key}
-          <label class="radio_grp radio_label" for={key}>
-            <input
-              type="radio"
-              bind:group={difficulty}
-              name="difficulty"
-              id={key}
-              value={key}
-            />
-            {key}
-          </label>
+        <label class="radio_grp radio_label" for={key}>
+          <input
+            type="radio"
+            bind:group={difficulty}
+            name="difficulty"
+            id={key}
+            value={key}
+          />
+          {key}
+        </label>
       {/each}
       <button class="select_mode_btn">Select mode</button>
     </form>
@@ -42,11 +42,10 @@
 </div>
 
 <style>
-
   h1 {
-    margin:20px 0;
+    margin: 20px 0;
   }
-  
+
   .app {
     display: grid;
     min-height: 100vh;
@@ -55,9 +54,9 @@
   }
 
   form {
-    display:flex;
-    flex-direction:column;
-    row-gap:20px;
+    display: flex;
+    flex-direction: column;
+    row-gap: 20px;
   }
 
   .radio_grp {
@@ -70,20 +69,20 @@
   .radio_label {
     font-size: 25px;
     text-transform: capitalize;
-    cursor:pointer;
+    cursor: pointer;
   }
 
   .radio_grp input[type="radio"] {
     width: 30px;
     height: 30px;
-    cursor:pointer;
+    cursor: pointer;
   }
 
   .select_mode_btn {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
-    font-size:20px;
+    font-size: 20px;
   }
 
   .minesweeper_ctn {

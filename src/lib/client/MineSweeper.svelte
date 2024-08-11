@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let difficulty: GameModes = "boy";
+  export let difficulty: GameModes = "baby";
   const _noop = () => {
     return;
   };
@@ -18,19 +18,15 @@
   function uniqueRandomIndices(
     row_count: number,
     col_count: number,
-    range: number
+    range: number,
   ) {
-    const [lower_row, upper_row]: Array<number> = [0, row_count - 1];
-    const [lower_col, upper_col]: Array<number> = [0, col_count - 1];
+    const [, upper_row]: Array<number> = [0, row_count - 1];
+    const [, upper_col]: Array<number> = [0, col_count - 1];
     const idxMap = new Map();
     while (idxMap.size !== range) {
-      const rowIdx = Math.floor(
-        Math.random() * (upper_row - lower_row + 1 + lower_row)
-      );
-      const colIdx = Math.floor(
-        Math.random() * (upper_col - lower_col + 1 + lower_col)
-      );
-      idxMap.set(`${rowIdx}${colIdx}`, [rowIdx, colIdx]);
+      const rowIdx = Math.floor(Math.random() * upper_row);
+      const colIdx = Math.floor(Math.random() * upper_col);
+      idxMap.set(`${rowIdx}_${colIdx}`, [rowIdx, colIdx]);
     }
     return [...idxMap.values()];
   }
@@ -57,7 +53,7 @@
     };
   };
 
-  const checkAdjacentCells = (bounds: Bound, board: Array<Array<Cell>>) => {
+  const checkAdjacentCells = (bounds: Bound, board: Cell[][]) => {
     const { row_min, row_max, col_min, col_max } = bounds;
     let count = 0;
     for (let row_idx = row_min; row_idx <= row_max; row_idx++) {
@@ -86,12 +82,42 @@
     return boardWithMines;
   }
 
+  function annotateWithMines(
+    boardWithMines: Cell[][],
+    minePositions: number[][],
+  ) {
+    for (let minePosition of minePositions) {
+      const [row, col] = minePosition;
+      const bounds = getBounds(row, col);
+      const { row_min, row_max, col_min, col_max } = bounds;
+      for (let row_idx = row_min; row_idx <= row_max; row_idx++) {
+        for (let col_idx = col_min; col_idx <= col_max; col_idx++) {
+          const adjacentCell = boardWithMines[row_idx][col_idx];
+          switch (adjacentCell.type) {
+            case CellType.count:
+              const currentCount: number =
+                +boardWithMines[row_idx][col_idx].text;
+              boardWithMines[row_idx][col_idx].text = `${currentCount + 1}`;
+              break;
+            case CellType.empty:
+              boardWithMines[row_idx][col_idx].text = "1";
+              boardWithMines[row_idx][col_idx].type = CellType.count;
+              break;
+            case CellType.mine:
+              break;
+          }
+        }
+      }
+    }
+    return boardWithMines;
+  }
+
   function createBoard(
     rows: number,
     cols: number,
-    minePositions: Array<Array<number>>
+    minePositions: Array<Array<number>>,
   ) {
-    const minePositionsStrings = minePositions.map(([r, c]) => `${r}${c}`);
+    const minePositionsStrings = minePositions.map(([r, c]) => `${r}_${c}`);
     let boardWithMines = Array.from({ length: rows }, (_, row_idx) =>
       Array.from({ length: cols }, (_, col_idx) => {
         let cell: Cell = {
@@ -102,19 +128,22 @@
           clicked: CellClickState.not_clicked,
           flagged: FlagState.not_flagged,
         };
-        if (minePositionsStrings.includes(`${row_idx}${col_idx}`)) {
+        if (minePositionsStrings.includes(`${row_idx}_${col_idx}`)) {
           cell.type = CellType.mine;
           cell.text = CellSymbols.mine;
         }
         return cell;
-      })
+      }),
     );
     return boardWithMines;
   }
   let { rows, cols, mines, cellSize } = GameDifficulty[difficulty];
   let minePositions = uniqueRandomIndices(rows, cols, mines);
   let game_state: GameState = GameState.on;
-  let board = annotate(createBoard(rows, cols, minePositions));
+  let board = annotateWithMines(
+    createBoard(rows, cols, minePositions),
+    minePositions,
+  );
   let clickedCellsCount = 0;
   let winClickCount = rows * cols - minePositions.length;
   $: flaggedCellsCount = mines;
@@ -295,6 +324,19 @@
   };
 </script>
 
+{#if game_state !== GameState.on}
+  <div
+    class="game_over_banner"
+    class:lose_game={game_state === GameState.lose}
+    transition:slide|local
+  >
+    {#if game_state === GameState.win}
+      You win
+    {:else if game_state === GameState.lose}
+      You lose !!!!
+    {/if}
+  </div>
+{/if}
 <div class="minesweeper_container">
   <div class="panel">
     <div>💣 {flaggedCellsCount}</div>
@@ -340,22 +382,13 @@
       {/each}
     {/each}
   </div>
-  {#if game_state !== GameState.on}
-    <div transition:slide|local>
-      {#if game_state === GameState.win}
-        You win
-      {:else if game_state === GameState.lose}
-        You lose !!!!
-      {/if}
-    </div>
-  {/if}
 </div>
 
 <style>
   .minesweeper_container {
     display: grid;
     grid-template-rows: auto 1fr;
-    place-items: center;
+    place-items: baseline center;
     padding: 20px;
     gap: 20px;
     width: fit-content;
@@ -422,5 +455,15 @@
 
   .cell.clicked {
     background-color: lightgrey;
+  }
+
+  .game_over_banner {
+    color: white;
+    width: 100%;
+    text-align: center;
+    letter-spacing: 1.3;
+  }
+  .lose_game {
+    background-color: red;
   }
 </style>
